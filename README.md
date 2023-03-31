@@ -2,7 +2,7 @@
 
 https://www.djangoproject.com/ のチュートリアルをやってみる
 
-ここは　https://docs.djangoproject.com/ja/4.1/intro/install/　のdemo
+ここは[インストール方法](https://docs.djangoproject.com/ja/4.1/intro/install/)のdemo
 
 # 実行方法
 
