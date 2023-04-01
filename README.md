@@ -2,7 +2,7 @@
 
 https://www.djangoproject.com/ のチュートリアルをやってみる
 
-ここは[インストール方法](https://docs.djangoproject.com/ja/4.1/intro/install/)のdemo
+ここは[インストール方法](https://docs.djangoproject.com/ja/4.1/intro/tutorial01/)のdemo
 
 # 実行方法
 
@@ -20,71 +20,22 @@ app  | Type "help", "copyright", "credits" or "license" for more information.
 
 # 遊ぶ
 
-## プロジェクト作成
-
-コンテナの中に入ってプロジェクトを作成する
+## 初めてのビュー作成
 
 ```
 $ docker exec -it django-app bash
-# python -V
-Python 3.11.2
-# python -m django --version
-4.1.7
-# cd app
-# django-admin startproject mysite
+# cd app/mysite
+~/app/mysite# python manage.py startapp polls
+~/app/mysite# ls polls/
+__init__.py  admin.py  apps.py	migrations  models.py  tests.py  views.py
+~/app/mysite# python manage.py runserver 0.0.0.0:8000
 ```
 
-これでdjangoのアプリケーションに必要なファイルが作成される
+`http://localhost:8000/polls/` にアクセスすると「Hello, world. You're at the polls index.」が表示される
 
-```
-# ls mysite
-manage.py mysite
-# ls mysite/mysite/
-__init__.py  asgi.py  settings.py  urls.py  wsgi.py
-```
+## path()
 
-- manage.py: Djangoプロジェクトで様々な操作を行うためのコマンドラインユーティリティ
-- asgi.py: Djangoプロジェクトを提供するASGI互換Webサーバのエントリポイント
-- settings.py: Djangoプロジェクトの設定ファイル
-- urls.py: DjangoプロジェクトのURL宣言を行うファイル
-- wsgi.py: DjangoプロジェクトをserveするためのWSGI互換Webサーバとのエントリポイント
-
-## 開発用サーバの起動
-
-```
-# python mysite/manage.py runserver 0.0.0.0:8000
-Watching for file changes with StatReloader
-Performing system checks...
-
-System check identified no issues (0 silenced).
-
-You have 18 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): admin, auth, contenttypes, sessions.
-Run 'python manage.py migrate' to apply them.
-March 31, 2023 - 09:55:08
-Django version 4.1.7, using settings 'mysite.settings'
-Starting development server at http://127.0.0.1:8000/
-Quit the server with CONTROL-C.
-```
-
-手元のブラウザでlocalhost:8000見てみるとDjangoが立ち上がっているはず
-
-開発サーバはPythonコードを自動的にリロードするらしい。便利。
-
-## Pollsアプリケーションを作る
-
-```
-# python manage.py startapp polls
-# ls -al polls/
-合計 20
-drwxr-xr-x 9 root root 288  3月 31 19:11 .
-drwxr-xr-x 6 root root 192  3月 31 19:11 ..
--rw-r--r-- 1 root root   0  3月 31 19:11 __init__.py
--rw-r--r-- 1 root root  63  3月 31 19:11 admin.py
--rw-r--r-- 1 root root 142  3月 31 19:11 apps.py
-drwxr-xr-x 3 root root  96  3月 31 19:11 migrations
--rw-r--r-- 1 root root  57  3月 31 19:11 models.py
--rw-r--r-- 1 root root  60  3月 31 19:11 tests.py
--rw-r--r-- 1 root root  63  3月 31 19:11 views.py
-```
-
-今回はここまで
+- route: URLパターン
+- view: 呼び出されるビュー関数
+- kwargs: 任意のキーワード引数を辞書として対象のビューに渡せる
+- name: URLに名前付けが可能。Djangoの中から参照できる。テンプレートの中で有効
