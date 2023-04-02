@@ -26,3 +26,6 @@ RUN python -m pip install Django
 
 # ポート開放
 EXPOSE 8000
+
+# ワーキングディレクトリの変更
+WORKDIR /root/app/mysite
