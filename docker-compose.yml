@@ -9,5 +9,6 @@ services:
       - ./app:/root/app
     ports:
       - 8000:8000
+    command: bash -c "python /root/app/mysite/manage.py runserver 0.0.0.0:8000"
     tty: true
     restart: always

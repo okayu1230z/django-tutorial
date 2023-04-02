@@ -2,7 +2,7 @@
 
 https://www.djangoproject.com/ のチュートリアルをやってみる
 
-ここは[インストール方法](https://docs.djangoproject.com/ja/4.1/intro/tutorial01/)のdemo
+ここからは https://docs.djangoproject.com/ja/4.1/intro/tutorial03/
 
 # 実行方法
 
@@ -20,45 +20,36 @@ app  | Type "help", "copyright", "credits" or "license" for more information.
 
 # 遊ぶ
 
-## Django Admin
+## ビューを追加
 
-サイト管理者を作る
+`polls/template/polls/index.html`
 
-```
-$ python manage.py createsuperuser
-Username: admin
-Email address: okmt1230z@gmail.com
-Password: P@ssw0rd
-Superuser created successfully.
-```
-
-
-```
-# python manage.py runserver 0.0.0.0:8000
-```
-
-`http://localhost:8000/admin`
-
-![admin](./docs/admin.png)
-
-ログインする
-
-![admin2](./docs/admin2.png)
-
-GroupsやUsersはDjangoに含まれる認証フレームワーク`django.contrib.auth`によって提供されている
-
-Pollアプリケをadmin上で編集できるようにする
-
-polls/admin.pyを編集する
-
-```
-from django.contrib import admin
-from .models import Question
-
-admin.site.register(Question)
+```html
+{% if latest_question_list %}
+    <ul>
+    {% for question in latest_question_list %}
+        <li>
+            <!-- <a href="/polls/{{ question.id }}/">{{ question.question_text }}</a> -->
+            <!-- 下記のように書くとハードコードが削除される -->
+            <a href="{% url 'polls:detail' question.id %}">{{ question.question_text }}</a>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No polls are available.</p>
+{% endif %}
 ```
 
-![admin3](./docs/admin3.png)
+`polls/views.py`
 
-色々編集できる素晴らしいadmin機能！
+```python
+...
 
+def index(request):
+    latest_question_list = Question.objects.order_by('-pub_date')[:5]
+    template = loader.get_template('polls/index.html')
+    context = {
+        'latest_question_list': latest_question_list,
+    }
+    return HttpResponse(template.render(context, request))
+```
