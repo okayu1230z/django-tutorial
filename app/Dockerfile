@@ -11,6 +11,9 @@ ENV LC_ALL ja_JP.UTF-8
 ENV TZ JST-9
 ENV TERM xterm
 
+# Djangoでの開発で利用する場合はsqliteもインストール
+RUN apt-get install -y sqlite3
+
 # 作業ツールのインストール（デプロイ用Imageでは抜くこと）
 RUN apt-get install -y vim less
 
