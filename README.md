@@ -22,34 +22,51 @@ app  | Type "help", "copyright", "credits" or "license" for more information.
 
 ## ビューを追加
 
-`polls/template/polls/index.html`
+```python
+def vote(request, question_id):
+    question = get_object_or_404(Question, pk=question_id)
+    try:
+        selected_choice = question.choice_set.get(pk=request.POST['choice'])
+    except (KeyError, Choice.DoesNotExist):
+        return render(request, 'polls/detail.html', {
+            'question': question,
+            'error_message': "You didn't select a choice.",
+        })
+    else:
+        selected_choice.votes += 1
+        selected_choice.save()
+        return HttpResponseRedirect(reverse('polls:results', args=(question_id,)))
+```
+
+reverseは名前からurlを呼び出すときに利用する
+
+reverse('name')とすると、urls.pyのurlpatternsで指定したnameで呼び出せる
+
+results.html
 
 ```html
-{% if latest_question_list %}
-    <ul>
-    {% for question in latest_question_list %}
-        <li>
-            <!-- <a href="/polls/{{ question.id }}/">{{ question.question_text }}</a> -->
-            <!-- 下記のように書くとハードコードが削除される -->
-            <a href="{% url 'polls:detail' question.id %}">{{ question.question_text }}</a>
-        </li>
+<h1>{{ question.question_test }}</h1>
+
+<ul>
+    {% for choice in question.choice_set.all %}
+    <li>{{ choice.choice_text }} -- {{ choice.votes }} vote{{ choice.votes|pluralize }}</li>
     {% endfor %}
-    </ul>
-{% else %}
-    <p>No polls are available.</p>
-{% endif %}
+</ul>
+
+<a href="{% url 'polls:detail' question.id %}">Vote again?</a>
 ```
 
-`polls/views.py`
+元々この記述だったurls.pyが
 
 ```python
-...
-
-def index(request):
-    latest_question_list = Question.objects.order_by('-pub_date')[:5]
-    template = loader.get_template('polls/index.html')
-    context = {
-        'latest_question_list': latest_question_list,
-    }
-    return HttpResponse(template.render(context, request))
+app_name = 'polls'
+urlpatterns = [
+    path('', views.index, name='index'), # /polls/
+    path('<int:question_id>/', views.detail, name='detail'), # /polls/5/
+    path('<int:question_id>/results/', views.results, name='results'), # /polls/5/results/
+    path('<int:question_id>/vote/', views.vote, name='vote'), # /polls/5/vote/
+]
 ```
+
+汎用ビューを使うとこうなる
+
