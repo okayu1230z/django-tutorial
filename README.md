@@ -151,3 +151,80 @@ https://codor.co.jp/django/generic-class-based-view-number
   - ArchiveView
   - DateDetailView
   - Day,Month,Today,Week,Year ArchiveView
+
+## プロジェクトと再利用可能なアプリ
+
+```
+$ tree
+.
+├── README.md
+├── app
+│   ├── Dockerfile
+│   └── mysite
+│       ├── db.sqlite3
+│       ├── manage.py
+│       ├── mysite
+│       │   ├── asgi.py
+│       │   ├── settings.py
+│       │   ├── urls.py
+│       │   └── wsgi.py
+│       └── polls
+│           ├── admin.py
+│           ├── apps.py
+│           ├── migrations
+│           │   └── 0001_initial.py
+│           ├── models.py
+│           ├── static
+│           │   └── polls
+│           │       ├── images
+│           │       │   └── django.jpeg
+│           │       └── style.css
+│           ├── templates
+│           │   └── polls
+│           │       ├── detail.html
+│           │       ├── index.html
+│           │       └── results.html
+│           ├── tests.py
+│           ├── urls.py
+│           └── views.py
+└── docker-compose.yml
+```
+
+再利用可能なパッケージを作成する
+
+```
+$ mv polls django-polls
+```
+
+```
+$ cat django-polls/README.rst
+=====
+Polls
+=====
+
+Polls is a Django app to conduct web-based polls. For each question,
+visitors can choose between a fixed number of answers.
+
+Detailed documentation is in the "docs" directory.
+
+Quick start
+-----------
+
+1. Add "polls" to your INSTALLED_APPS setting like this::
+
+    INSTALLED_APPS = [
+        ...
+        'polls',
+    ]
+
+2. Include the polls URLconf in your project urls.py like this::
+
+    path('polls/', include('polls.urls')),
+
+3. Run ``python manage.py migrate`` to create the polls models.
+
+4. Start the development server and visit http://127.0.0.1:8000/admin/
+   to create a poll (you'll need the Admin app enabled).
+
+5. Visit http://127.0.0.1:8000/polls/ to participate in the poll.
+```
