@@ -2,7 +2,7 @@
 
 https://www.djangoproject.com/ のチュートリアルをやってみる
 
-ここからは https://docs.djangoproject.com/ja/4.1/intro/tutorial03/
+ここからは　https://docs.djangoproject.com/ja/4.1/intro/tutorial05/
 
 # 実行方法
 
@@ -18,55 +18,136 @@ app  | Type "help", "copyright", "credits" or "license" for more information.
 ...
 ```
 
-# 遊ぶ
+# 自動テストの導入
 
-## ビューを追加
+テストのないコードはデザインとは壊れている by Jacob Kaplan-Moss
 
-```python
-def vote(request, question_id):
-    question = get_object_or_404(Question, pk=question_id)
-    try:
-        selected_choice = question.choice_set.get(pk=request.POST['choice'])
-    except (KeyError, Choice.DoesNotExist):
-        return render(request, 'polls/detail.html', {
-            'question': question,
-            'error_message': "You didn't select a choice.",
-        })
-    else:
-        selected_choice.votes += 1
-        selected_choice.save()
-        return HttpResponseRedirect(reverse('polls:results', args=(question_id,)))
+```
+$ docker exec -it django-app bash
+# cd app/mysite; python manage.py shell
+Python 3.11.3 (main, Apr  5 2023, 22:58:06) [GCC 10.2.1 20210110] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+(InteractiveConsole)
+>>> future_question = Question(pub_date=timezone.now()+datetime.timedelta(days=30))
+>>> future_question.was_published_recently()
+True
 ```
 
-reverseは名前からurlを呼び出すときに利用する
+以上のように未来の時間でも最近publishされた判定になるバグが存在する
 
-reverse('name')とすると、urls.pyのurlpatternsで指定したnameで呼び出せる
+バグをあぶりだすためにテストを追加する
 
-results.html
+```
+import datetime
 
-```html
-<h1>{{ question.question_test }}</h1>
+from django.test import TestCase
+from django.utils import timezone
 
-<ul>
-    {% for choice in question.choice_set.all %}
-    <li>{{ choice.choice_text }} -- {{ choice.votes }} vote{{ choice.votes|pluralize }}</li>
-    {% endfor %}
-</ul>
+from .models import Question
 
-<a href="{% url 'polls:detail' question.id %}">Vote again?</a>
+
+class QuestionModelTests(TestCase):
+
+    def test_was_published_recently_with_future_question(self):
+        """
+        was_published_recently() returns False for questions whose pub_date
+        is in the future.
+        """
+        time = timezone.now() + datetime.timedelta(days=30)
+        future_question = Question(pub_date=time)
+        self.assertIs(future_question.was_published_recently(), False)
 ```
 
-元々この記述だったurls.pyが
+未来の日付のpub_dateを持つQuestionのインスタンスを生成するメソッドを持つdjango.test.TestCaseを継承したサブクラスを作っている
 
-```python
-app_name = 'polls'
-urlpatterns = [
-    path('', views.index, name='index'), # /polls/
-    path('<int:question_id>/', views.detail, name='detail'), # /polls/5/
-    path('<int:question_id>/results/', views.results, name='results'), # /polls/5/results/
-    path('<int:question_id>/vote/', views.vote, name='vote'), # /polls/5/vote/
-]
+それからwas_published_recently()の出力をチェックしていて、これはFalseになることが想定されているはず
+
+```
+# python manage.py test polls
+Found 1 test(s).
+Creating test database for alias 'default'...
+System check identified no issues (0 silenced).
+F
+======================================================================
+FAIL: test_was_published_recently_with_future_question (polls.tests.QuestionModelTests.test_was_published_recently_with_future_question)
+was_published_recently() returns False for questions whose pub_date
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/root/app/mysite/polls/tests.py", line 18, in test_was_published_recently_with_future_question
+    self.assertIs(future_question.was_published_recently(), False)
+AssertionError: True is not False
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (failures=1)
+Destroying test database for alias 'default'...
 ```
 
-汎用ビューを使うとこうなる
+`python manage.py test polls`はpollsアプリケーション内にある`django.taet.TestCase`クラスのサブクラスを探す
 
+テストを通るように修正すれば下記のような結果になる
+
+```
+# python manage.py test polls
+Found 1 test(s).
+Creating test database for alias 'default'...
+System check identified no issues (0 silenced).
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+OK
+Destroying test database for alias 'default'...
+```
+
+## Viewのテスト
+
+Viewに対するテスト
+
+```
+# python manage.py shell
+Python 3.11.3 (main, Apr  5 2023, 22:58:06) [GCC 10.2.1 20210110] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+(InteractiveConsole)
+>>> from django.test.utils import setup_test_environment
+>>> setup_test_environment()
+>>> from django.test import Client
+>>> client = Client()
+>>> response = client.get('/')
+Not Found: /
+>>> response.status_code
+404
+>>> from django.urls import reverse
+>>> response = client.get(reverse('polls:index'))
+>>> response.status_code
+200
+>>> response.context['latest_question_list']
+<QuerySet [<Question: What's up?>]
+```
+
+## Viewの改良
+
+公開されていない投票（pub_dateの日付が未来になっている）が表示されないようにしたい
+
+汎用ビューについて
+
+https://codor.co.jp/django/generic-class-based-view-number
+
+- LIST系
+  - ListView
+- DETAIL系
+  - DetailView
+- EDIT系
+  - CreateView
+  - DeleteView
+  - UpdateView
+  - FormView
+- BASE系
+  - TemplateView
+  - View
+  - RedirectView
+- DATES系
+  - ArchiveView
+  - DateDetailView
+  - Day,Month,Today,Week,Year ArchiveView
